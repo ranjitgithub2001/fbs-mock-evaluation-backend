@@ -1,0 +1,80 @@
+package com.fbs.mock_evaluation_system.service;
+
+import com.fbs.mock_evaluation_system.dto.ForgotPasswordRequestDTO;
+import com.fbs.mock_evaluation_system.dto.ResetPasswordRequestDTO;
+import com.fbs.mock_evaluation_system.dto.VerifyOtpRequestDTO;
+import com.fbs.mock_evaluation_system.entity.User;
+import com.fbs.mock_evaluation_system.exception.InvalidInputException;
+import com.fbs.mock_evaluation_system.exception.ResourceNotFoundException;
+import com.fbs.mock_evaluation_system.repository.UserRepository;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class ForgotPasswordService {
+
+    private final UserRepository userRepository;
+    private final OtpService otpService;
+    private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
+
+    public ForgotPasswordService(UserRepository userRepository,
+            OtpService otpService,
+            EmailService emailService,
+            PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.otpService = otpService;
+        this.emailService = emailService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @Transactional
+    public void sendOtp(ForgotPasswordRequestDTO request) {
+
+        String email = request.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No account found with email: " + email));
+
+        if (!user.isActive()) {
+            throw new InvalidInputException(
+                    "This account is inactive. Please contact admin.");
+        }
+
+        String otp = otpService.generateOtp(email);
+        emailService.sendOtpEmail(email, user.getFullName(), otp);
+    }
+
+    public boolean verifyOtp(VerifyOtpRequestDTO request) {
+
+        String email = request.getEmail().trim().toLowerCase();
+        return otpService.verifyOtp(email, request.getOtp());
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequestDTO request) {
+
+        String email = request.getEmail().trim().toLowerCase();
+
+        if (!otpService.verifyOtp(email, request.getOtp())) {
+            throw new InvalidInputException("Invalid or expired OTP.");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new InvalidInputException(
+                    "New password and confirm password do not match.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No account found with email: " + email));
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        otpService.clearOtp(email);
+    }
+}

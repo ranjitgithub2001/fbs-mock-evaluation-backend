@@ -129,4 +129,23 @@ public class EmailService {
         );
 
         mailSender.send(message);
-    }}
+    }
+    public void sendOtpEmail(String toEmail, String fullName, String otp) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject("FirstBit Solutions — Password Reset OTP");
+        message.setText(
+            "Dear " + fullName + ",\n\n" +
+            "Your OTP for password reset is:\n\n" +
+            "    " + otp + "\n\n" +
+            "This OTP is valid for 10 minutes.\n\n" +
+            "If you did not request a password reset, please ignore this email.\n\n" +
+            "Regards,\n" +
+            "FirstBit Solutions"
+        );
+
+        mailSender.send(message);
+    }
+}
