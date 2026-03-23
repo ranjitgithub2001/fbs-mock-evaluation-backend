@@ -32,7 +32,6 @@ public class ForgotPasswordService {
 
     @Transactional
     public void sendOtp(ForgotPasswordRequestDTO request) {
-
         String email = request.getEmail().trim().toLowerCase();
 
         User user = userRepository.findByEmail(email)
@@ -45,7 +44,14 @@ public class ForgotPasswordService {
         }
 
         String otp = otpService.generateOtp(email);
-        emailService.sendOtpEmail(email, user.getFullName(), otp);
+        
+        try {
+            emailService.sendOtpEmail(email, user.getFullName(), otp);
+        } catch (Exception e) {
+            System.out.println("OTP email failed: " + e.getMessage());
+            // Still throw so user knows email failed
+            throw new InvalidInputException("Failed to send OTP email. Please try again later.");
+        }
     }
 
     public boolean verifyOtp(VerifyOtpRequestDTO request) {
