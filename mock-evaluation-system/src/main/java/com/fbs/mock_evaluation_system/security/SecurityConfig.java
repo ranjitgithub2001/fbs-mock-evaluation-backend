@@ -35,7 +35,11 @@ public class SecurityConfig {
             CorsConfiguration config = new CorsConfiguration();
             config.addAllowedOrigin("http://localhost:3000");
             config.addAllowedOrigin("https://fbs-mock-evaluation-frontend-rmb4.vercel.app");
-            config.addAllowedMethod("*");
+            config.addAllowedMethod("GET");
+            config.addAllowedMethod("POST");
+            config.addAllowedMethod("PUT");
+            config.addAllowedMethod("DELETE");
+            config.addAllowedMethod("OPTIONS");
             config.addAllowedHeader("*");
             config.setAllowCredentials(true);
             return config;
