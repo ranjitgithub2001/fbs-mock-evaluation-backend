@@ -29,13 +29,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public UserService(UserRepository userRepository,
             UserMapper userMapper,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -57,6 +60,11 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
 
         User saved = userRepository.save(user);
+        emailService.sendApprovalEmail(
+        	    saved.getEmail(),
+        	    saved.getFullName(),
+        	    DEFAULT_PASSWORD
+        	);
 
         return userMapper.toResponseDTO(saved);
     }
