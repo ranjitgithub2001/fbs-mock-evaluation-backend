@@ -47,10 +47,10 @@ public class AuthController {
     }
  // POST /auth/forgot-password
     @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(
+    public ResponseEntity<String> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequestDTO request) {
-        forgotPasswordService.sendOtp(request);
-        return ResponseEntity.ok().build();
+        String otp = forgotPasswordService.sendOtp(request);
+        return ResponseEntity.ok(otp);
     }
 
     // POST /auth/verify-otp
